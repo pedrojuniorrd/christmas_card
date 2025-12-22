@@ -1,0 +1,38 @@
+/* client/src/templates/styles/midnight-star.css */
+
+.christmas-gradient-starry {
+  background: radial-gradient(circle at center, #1a2a6c, #b21f1f, #fdbb2d);
+  background-size: 200% 200%;
+  animation: midnight-glow 10s ease-in-out infinite;
+  transition: all 0.5s ease;
+}
+
+@keyframes midnight-glow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Estilização do Cartão Interno */
+.christmas-gradient-starry .bg-white\/95 {
+  background-color: rgba(15, 23, 42, 0.8) !important;
+  backdrop-filter: blur(8px);
+  border: 2px solid #fdbb2d;
+  box-shadow: 0 0 20px rgba(253, 187, 45, 0.2);
+  color: #fffbeb !important;
+}
+
+.christmas-gradient-starry:hover .bg-white\/95 {
+  box-shadow: 0 0 35px rgba(253, 187, 45, 0.4);
+  transform: translateY(-5px);
+  border-color: #ffffff;
+}
+
+/* Ajustes de texto para contraste */
+.christmas-gradient-starry .text-foreground {
+  color: #fef3c7 !important;
+}
+
+.christmas-gradient-starry .text-muted-foreground {
+  color: #d1d5db !important;
+}

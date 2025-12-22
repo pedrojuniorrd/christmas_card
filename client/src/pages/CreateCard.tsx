@@ -24,7 +24,7 @@ import {
   Gift,
   Eye,
 } from "lucide-react";
-import Snowfall from "@/components/Snowfall";
+// import Snowfall from "@/components/Snowfall";
 import CardPreview from "@/components/CardPreview";
 import { AVAILABLE_TEMPLATES } from "@/templates";
 
@@ -296,7 +296,7 @@ const uploadToCloudinary = async (file: File | Blob, resourceType: "image" | "vi
 
   return (
     <div className="min-h-screen bg-background relative">
-      <Snowfall count={30} />
+      {/* <Snowfall count={30} /> */}
       <audio ref={audioRef} onEnded={() => setPlayingSong(null)} />
 
       {/* Header */}
