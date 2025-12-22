@@ -6,6 +6,7 @@ import { Loader2, Volume2, VolumeX, Share2, Gift } from "lucide-react";
 import Snowfall from "@/components/Snowfall";
 import TwinklingLights from "@/components/TwinklingLights";
 import { toast } from "sonner";
+import { getTemplateById } from "@/templates"; // Importa o sistema modular
 
 export default function CardView() {
   const { publicId } = useParams<{ publicId: string }>();
@@ -17,6 +18,9 @@ export default function CardView() {
     { publicId: publicId || "" },
     { enabled: !!publicId }
   );
+
+  // Busca as configurações do template (ou usa o padrão se não carregar)
+  const currentTemplate = card ? getTemplateById(card.templateId) : getTemplateById(1);
 
   useEffect(() => {
     if (card && audioRef.current) {
@@ -91,48 +95,19 @@ export default function CardView() {
     );
   }
 
-  const getBackgroundClass = () => {
-    switch (card.templateId) {
-      case 1:
-        return "christmas-gradient-red";
-      case 2:
-        return "christmas-gradient-green";
-      case 3:
-        return "christmas-gradient-gold";
-      case 4:
-        return "christmas-gradient-night";
-      default:
-        return "christmas-gradient-red";
-    }
-  };
-
-  const getAnimationType = () => {
-    switch (card.templateId) {
-      case 1:
-      case 4:
-        return "snow";
-      case 2:
-        return "lights";
-      case 3:
-        return "stars";
-      default:
-        return "snow";
-    }
-  };
-
   const audioUrl = card.customSongUrl || card.songUrl;
 
   return (
-    <div className={`min-h-screen ${getBackgroundClass()} relative overflow-hidden`}>
+    <div className={`min-h-screen ${currentTemplate.className} relative overflow-hidden`}>
       {/* Audio element */}
       {audioUrl && (
         <audio ref={audioRef} src={audioUrl} loop preload="auto" />
       )}
 
-      {/* Animation based on template */}
-      {getAnimationType() === "snow" && <Snowfall count={60} />}
-      {getAnimationType() === "lights" && <TwinklingLights />}
-      {getAnimationType() === "stars" && <Snowfall count={40} />}
+      {/* Animation based on template configuration */}
+      {currentTemplate.animation === "snow" && <Snowfall count={60} />}
+      {currentTemplate.animation === "lights" && <TwinklingLights />}
+      {currentTemplate.animation === "stars" && <Snowfall count={40} />}
 
       {/* Controls */}
       <div className="fixed top-4 right-4 z-50 flex gap-2">

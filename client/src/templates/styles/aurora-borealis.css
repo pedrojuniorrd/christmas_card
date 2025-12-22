@@ -1,0 +1,41 @@
+/* client/src/templates/styles/aurora-borealis.css */
+
+.christmas-gradient-aurora {
+  background: linear-gradient(-45deg, #020024, #090979, #00d4ff, #7000ff);
+  background-size: 400% 400%;
+  animation: aurora-move 15s ease infinite;
+  transition: all 0.5s ease;
+}
+
+.christmas-gradient-aurora:hover {
+  background-size: 300% 300%;
+}
+
+@keyframes aurora-move {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Customização do Cartão Interno */
+.christmas-gradient-aurora .bg-white\/95 {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white !important;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.christmas-gradient-aurora:hover .bg-white\/95 {
+  box-shadow: 0 0 30px rgba(0, 212, 255, 0.4);
+  transform: scale(1.02);
+  border-color: rgba(0, 212, 255, 0.5);
+}
+
+/* Cores de Texto */
+.christmas-gradient-aurora .text-foreground {
+  color: #e2e8f0 !important;
+}
+.christmas-gradient-aurora .text-muted-foreground {
+  color: #94a3b8 !important;
+}

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
+import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { trpc } from "@/lib/trpc";
 import {
@@ -13,7 +14,7 @@ import {
   ArrowRight,
   Sparkles,
   Music,
-  Image,
+  Image as ImageIcon,
   CreditCard,
   Loader2,
   Upload,
@@ -21,8 +22,19 @@ import {
   Pause,
   Check,
   Gift,
+  Eye,
 } from "lucide-react";
 import Snowfall from "@/components/Snowfall";
+import CardPreview from "@/components/CardPreview";
+import { AVAILABLE_TEMPLATES } from "@/templates";
+
+// --- 1. MÚSICAS HARDCODED (Sem banco de dados) ---
+const SONGS = [
+  { id: 1, title: "Jingle Bells", artist: "Classic", fileUrl: "/assets/music/jingle-bells.mp3" },
+  { id: 2, title: "Silent Night", artist: "Piano", fileUrl: "/assets/music/silent-night.mp3" },
+  { id: 3, title: "We Wish You", artist: "Jazz", fileUrl: "/assets/music/we-wish-you.mp3" },
+  { id: 4, title: "Deck the Halls", artist: "Instrumental", fileUrl: "/assets/music/deck-the-halls.mp3" },
+];
 
 type Step = "template" | "message" | "music" | "photo" | "payment";
 
@@ -30,53 +42,16 @@ const STEPS: { id: Step; title: string; icon: React.ReactNode }[] = [
   { id: "template", title: "Template", icon: <Sparkles className="h-4 w-4" /> },
   { id: "message", title: "Message", icon: <Gift className="h-4 w-4" /> },
   { id: "music", title: "Music", icon: <Music className="h-4 w-4" /> },
-  { id: "photo", title: "Photo", icon: <Image className="h-4 w-4" /> },
+  { id: "photo", title: "Photo", icon: <ImageIcon className="h-4 w-4" /> },
   { id: "payment", title: "Payment", icon: <CreditCard className="h-4 w-4" /> },
-];
-
-const TEMPLATES = [
-  {
-    id: 1,
-    name: "Classic Red",
-    description: "Traditional Christmas warmth",
-    backgroundColor: "christmas-gradient-red",
-    accentColor: "gold",
-    animationType: "snow",
-    preview: "🎄",
-  },
-  {
-    id: 2,
-    name: "Evergreen",
-    description: "Fresh forest vibes",
-    backgroundColor: "christmas-gradient-green",
-    accentColor: "gold",
-    animationType: "lights",
-    preview: "🌲",
-  },
-  {
-    id: 3,
-    name: "Golden Glow",
-    description: "Elegant and festive",
-    backgroundColor: "christmas-gradient-gold",
-    accentColor: "red",
-    animationType: "stars",
-    preview: "⭐",
-  },
-  {
-    id: 4,
-    name: "Silent Night",
-    description: "Peaceful winter evening",
-    backgroundColor: "christmas-gradient-night",
-    accentColor: "white",
-    animationType: "snow",
-    preview: "🌙",
-  },
 ];
 
 export default function CreateCard() {
   const { creditCode } = useParams<{ creditCode?: string }>();
   const [, setLocation] = useLocation();
   const [currentStep, setCurrentStep] = useState<Step>("template");
+  
+  // Estados do Formulário
   const [selectedTemplate, setSelectedTemplate] = useState<number | null>(null);
   const [message, setMessage] = useState("");
   const [senderName, setSenderName] = useState("");
@@ -85,27 +60,26 @@ export default function CreateCard() {
   const [customSongFile, setCustomSongFile] = useState<File | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  const [playingSong, setPlayingSong] = useState<number | null>(null);
-  const [isGeneratingMessage, setIsGeneratingMessage] = useState(false);
   const [email, setEmail] = useState("");
   const [selectedPlan, setSelectedPlan] = useState<"single" | "family">("single");
+  
+  // Estados de UI
+  const [playingSong, setPlayingSong] = useState<number | null>(null);
+  const [isGeneratingMessage, setIsGeneratingMessage] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
-  // Fetch songs from library
-  const { data: songs = [], isLoading: loadingSongs } = trpc.songs.list.useQuery();
-  
-  // AI message suggestion mutation
+  // Mutações
   const generateMessageMutation = trpc.cards.generateMessage.useMutation({
     onSuccess: (data) => {
       setMessage(data.message);
       toast.success("Message generated!");
     },
-    onError: () => {
-      toast.error("Failed to generate message");
-    },
+    onError: () => toast.error("Failed to generate message"),
   });
 
-  // Create card mutation
+  // Mutação de criação (agora só inicia o pagamento ou redireciona)
   const createCardMutation = trpc.cards.create.useMutation({
     onSuccess: (data) => {
       if (data.paymentUrl) {
@@ -114,27 +88,138 @@ export default function CreateCard() {
         setLocation(`/c/${data.publicId}`);
       }
     },
-    onError: (error) => {
-      toast.error(error.message || "Failed to create card");
-    },
+    onError: (error) => toast.error(error.message || "Failed to create card"),
   });
 
-  // File upload mutation
-  const uploadFileMutation = trpc.files.upload.useMutation();
+  // --- 2. LÓGICA DE UPLOAD PARA CLOUDINARY ---
+const uploadToCloudinary = async (file: File | Blob, resourceType: "image" | "video" | "raw" | "auto" = "auto") => {
+    // 1. Pega a assinatura do backend
+    const signResponse = await fetch("/api/sign-upload");
+    if (!signResponse.ok) throw new Error("Failed to get upload signature");
+    const signData = await signResponse.json();
 
-  const currentStepIndex = STEPS.findIndex((s) => s.id === currentStep);
-  const progress = ((currentStepIndex + 1) / STEPS.length) * 100;
+    // 2. Prepara o formulário para o Cloudinary
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("api_key", signData.apiKey);
+    formData.append("timestamp", signData.timestamp.toString());
+    formData.append("signature", signData.signature);
+    formData.append("folder", signData.folder);
+    
+    // Se não for auto, força o tipo no form data também (embora a URL controle isso principalmente)
+    if (resourceType !== "auto") {
+        formData.append("resource_type", resourceType);
+    }
 
-  const handleGenerateMessage = async () => {
-    setIsGeneratingMessage(true);
+    // 3. Envia direto para a nuvem
+    // Aqui o resourceType define se vai para /image/upload, /video/upload ou /auto/upload
+    const uploadUrl = `https://api.cloudinary.com/v1_1/${signData.cloudName}/${resourceType}/upload`;
+    
+    const res = await fetch(uploadUrl, {
+      method: "POST",
+      body: formData,
+    });
+
+    if (!res.ok) throw new Error("Cloudinary upload failed");
+    const data = await res.json();
+    return {
+        url: data.secure_url,
+        public_id: data.public_id
+    };
+  };
+  const handleNext = () => {
+    const stepIndex = STEPS.findIndex((s) => s.id === currentStep);
+    if (stepIndex < STEPS.length - 1) {
+      setCurrentStep(STEPS[stepIndex + 1].id);
+    }
+  };
+
+  const handleBack = () => {
+    const stepIndex = STEPS.findIndex((s) => s.id === currentStep);
+    if (stepIndex > 0) {
+      setCurrentStep(STEPS[stepIndex - 1].id);
+    } else {
+      setLocation("/");
+    }
+  };
+
+  // --- 3. SUBMIT PRINCIPAL (Salva JSON na Nuvem) ---
+  const handleSubmit = async () => {
+    if (!canProceed()) return;
+    setIsUploading(true);
+
     try {
-      await generateMessageMutation.mutateAsync({
-        recipientName: recipientName || undefined,
-        senderName: senderName || undefined,
-        tone: "warm",
+      let finalPhotoUrl = undefined;
+      let finalSongUrl = undefined;
+
+      // A. Upload da Foto (se houver)
+      if (photoFile) {
+        const result = await uploadToCloudinary(photoFile, "image");
+        finalPhotoUrl = result.url;
+      }
+
+      // B. Upload da Música Customizada (se houver)
+      if (customSongFile) {
+        const result = await uploadToCloudinary(customSongFile, "video"); // Audio geralmente é tratado como 'video' no cloudinary upload API ou 'auto'
+        finalSongUrl = result.url;
+      } else if (selectedSong) {
+        // Se escolheu da biblioteca, pega a URL fixa
+        finalSongUrl = SONGS.find(s => s.id === selectedSong)?.fileUrl;
+      }
+
+      // C. Cria o Objeto de Dados do Cartão
+      const cardData = {
+        templateId: selectedTemplate,
+        message,
+        senderName,
+        recipientName,
+        photoUrl: finalPhotoUrl,
+        songUrl: finalSongUrl,
+        plan: selectedPlan,
+        createdAt: new Date().toISOString(),
+      };
+
+      // D. Salva esse objeto como um arquivo JSON no Cloudinary
+      // Isso substitui o banco de dados!
+      
+      const jsonBlob = new Blob([JSON.stringify(cardData)], { type: "application/json" });
+      const jsonFile = new File([jsonBlob], `card_${Date.now()}.json`, { type: "application/json" });
+      
+      // raw = arquivos não processados (json, txt)
+      const uploadResult = await uploadToCloudinary(jsonFile, "raw"); 
+      const cardPublicId = uploadResult.public_id; // Esse será o ID do nosso cartão!
+
+      // E. Chama o Backend apenas para processar pagamento (passando o ID do JSON)
+      // O backend vai criar a sessão do Stripe e colocar esse ID no metadata
+      await createCardMutation.mutateAsync({
+        cloudinaryId: cardPublicId, // Passamos o ID do arquivo JSON
+        email,
+        plan: selectedPlan,
+        creditCode: creditCode || undefined,
+        // Mandamos os dados redundantes caso o backend precise pro email, mas o ID é o principal
+        templateId: selectedTemplate!, 
+        message, 
       });
+
+    } catch (error) {
+      console.error("Error creating card:", error);
+      toast.error("Erro ao salvar cartão. Tente novamente.");
     } finally {
-      setIsGeneratingMessage(false);
+      setIsUploading(false);
+    }
+  };
+
+  // Helpers de UI
+  const togglePlaySong = (songId: number, url: string) => {
+    if (playingSong === songId) {
+      audioRef.current?.pause();
+      setPlayingSong(null);
+    } else {
+      if (audioRef.current) {
+        audioRef.current.src = url;
+        audioRef.current.play();
+      }
+      setPlayingSong(songId);
     }
   };
 
@@ -164,117 +249,50 @@ export default function CreateCard() {
     }
   };
 
-  const togglePlaySong = (songId: number, url: string) => {
-    if (playingSong === songId) {
-      audioRef.current?.pause();
-      setPlayingSong(null);
-    } else {
-      if (audioRef.current) {
-        audioRef.current.src = url;
-        audioRef.current.play();
-      }
-      setPlayingSong(songId);
-    }
-  };
-
-  const handleNext = () => {
-    const stepIndex = STEPS.findIndex((s) => s.id === currentStep);
-    if (stepIndex < STEPS.length - 1) {
-      setCurrentStep(STEPS[stepIndex + 1].id);
-    }
-  };
-
-  const handleBack = () => {
-    const stepIndex = STEPS.findIndex((s) => s.id === currentStep);
-    if (stepIndex > 0) {
-      setCurrentStep(STEPS[stepIndex - 1].id);
-    } else {
-      setLocation("/");
-    }
-  };
-
-  const handleSubmit = async () => {
-    if (!selectedTemplate) {
-      toast.error("Please select a template");
-      return;
-    }
-    if (!message.trim()) {
-      toast.error("Please enter a message");
-      return;
-    }
-    if (!email.trim()) {
-      toast.error("Please enter your email");
-      return;
-    }
-
+  const handleGenerateMessage = async () => {
+    setIsGeneratingMessage(true);
     try {
-      let photoUrl: string | undefined;
-      let customSongUrl: string | undefined;
-
-      // Upload photo if provided
-      if (photoFile) {
-        const photoBase64 = await fileToBase64(photoFile);
-        const uploadResult = await uploadFileMutation.mutateAsync({
-          file: photoBase64,
-          filename: photoFile.name,
-          type: "photo",
-        });
-        photoUrl = uploadResult.url;
-      }
-
-      // Upload custom song if provided
-      if (customSongFile) {
-        const songBase64 = await fileToBase64(customSongFile);
-        const uploadResult = await uploadFileMutation.mutateAsync({
-          file: songBase64,
-          filename: customSongFile.name,
-          type: "audio",
-        });
-        customSongUrl = uploadResult.url;
-      }
-
-      await createCardMutation.mutateAsync({
-        templateId: selectedTemplate,
-        message,
-        senderName: senderName || undefined,
+      await generateMessageMutation.mutateAsync({
         recipientName: recipientName || undefined,
-        songId: selectedSong || undefined,
-        customSongUrl,
-        photoUrl,
-        email,
-        plan: selectedPlan,
-        creditCode: creditCode || undefined,
+        senderName: senderName || undefined,
+        tone: "warm",
       });
-    } catch (error) {
-      console.error("Error creating card:", error);
+    } finally {
+      setIsGeneratingMessage(false);
     }
   };
 
-  const fileToBase64 = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result as string);
-      reader.onerror = reject;
-    });
+  const getPreviewData = () => {
+    let songUrl: string | undefined;
+    if (customSongFile) {
+      songUrl = URL.createObjectURL(customSongFile);
+    } else if (selectedSong) {
+      songUrl = SONGS.find(s => s.id === selectedSong)?.fileUrl;
+    }
+
+    return {
+      templateId: selectedTemplate || 1,
+      message,
+      senderName,
+      recipientName,
+      photoUrl: photoPreview || undefined,
+      songUrl
+    };
   };
 
   const canProceed = () => {
     switch (currentStep) {
-      case "template":
-        return selectedTemplate !== null;
-      case "message":
-        return message.trim().length > 0;
-      case "music":
-        return true; // Music is optional
-      case "photo":
-        return true; // Photo is optional
-      case "payment":
-        return email.trim().length > 0;
-      default:
-        return false;
+      case "template": return selectedTemplate !== null;
+      case "message": return message.trim().length > 0;
+      case "music": return true; 
+      case "photo": return true; 
+      case "payment": return email.trim().length > 0;
+      default: return false;
     }
   };
+
+  const currentStepIndex = STEPS.findIndex((s) => s.id === currentStep);
+  const progress = ((currentStepIndex + 1) / STEPS.length) * 100;
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -289,8 +307,21 @@ export default function CreateCard() {
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
-            <h1 className="font-semibold">Create Your Card</h1>
-            <div className="w-20" />
+            <h1 className="font-semibold hidden md:block">Create Your Card</h1>
+            
+            <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline" size="sm" disabled={!selectedTemplate}>
+                  <Eye className="h-4 w-4 mr-2" />
+                  Preview
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-4xl h-[90vh] p-0 border-none bg-transparent shadow-none">
+                <div className="w-full h-full relative">
+                  <CardPreview data={getPreviewData()} />
+                </div>
+              </DialogContent>
+            </Dialog>
           </div>
           <div className="mt-4">
             <Progress value={progress} className="h-2" />
@@ -300,9 +331,7 @@ export default function CreateCard() {
                   key={step.id}
                   onClick={() => index <= currentStepIndex && setCurrentStep(step.id)}
                   className={`flex items-center gap-1 text-xs ${
-                    index <= currentStepIndex
-                      ? "text-primary font-medium"
-                      : "text-muted-foreground"
+                    index <= currentStepIndex ? "text-primary font-medium" : "text-muted-foreground"
                   }`}
                   disabled={index > currentStepIndex}
                 >
@@ -317,41 +346,28 @@ export default function CreateCard() {
 
       {/* Main Content */}
       <main className="container py-8 max-w-4xl">
-        {/* Template Selection */}
+        
+        {/* Step 1: Template */}
         {currentStep === "template" && (
           <div className="space-y-6">
             <div className="text-center">
               <h2 className="text-2xl font-bold mb-2">Choose Your Template</h2>
-              <p className="text-muted-foreground">
-                Select a beautiful design for your Christmas card
-              </p>
+              <p className="text-muted-foreground">Select a beautiful design</p>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              {TEMPLATES.map((template) => (
+              {AVAILABLE_TEMPLATES.map((template) => (
                 <Card
                   key={template.id}
                   className={`cursor-pointer transition-all hover:scale-105 ${
-                    selectedTemplate === template.id
-                      ? "ring-2 ring-primary shadow-lg"
-                      : ""
+                    selectedTemplate === template.id ? "ring-2 ring-primary shadow-lg" : ""
                   }`}
                   onClick={() => setSelectedTemplate(template.id)}
                 >
                   <CardContent className="p-4">
-                    <div
-                      className={`aspect-[3/4] rounded-lg ${template.backgroundColor} flex items-center justify-center text-4xl mb-3`}
-                    >
+                    <div className={`aspect-[3/4] rounded-lg ${template.className} flex items-center justify-center text-4xl mb-3`}>
                       {template.preview}
                     </div>
                     <h3 className="font-semibold text-sm">{template.name}</h3>
-                    <p className="text-xs text-muted-foreground">
-                      {template.description}
-                    </p>
-                    {selectedTemplate === template.id && (
-                      <div className="absolute top-2 right-2 bg-primary text-primary-foreground rounded-full p-1">
-                        <Check className="h-3 w-3" />
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
               ))}
@@ -359,348 +375,162 @@ export default function CreateCard() {
           </div>
         )}
 
-        {/* Message Input */}
+        {/* Step 2: Message */}
         {currentStep === "message" && (
           <div className="space-y-6 max-w-2xl mx-auto">
             <div className="text-center">
               <h2 className="text-2xl font-bold mb-2">Write Your Message</h2>
-              <p className="text-muted-foreground">
-                Add a personal touch to your card
-              </p>
             </div>
             <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label htmlFor="recipientName">To (Recipient Name)</Label>
-                  <Input
-                    id="recipientName"
-                    placeholder="e.g., Mom"
-                    value={recipientName}
-                    onChange={(e) => setRecipientName(e.target.value)}
-                  />
+                  <Label>To (Recipient)</Label>
+                  <Input value={recipientName} onChange={(e) => setRecipientName(e.target.value)} placeholder="e.g. Mom" />
                 </div>
                 <div>
-                  <Label htmlFor="senderName">From (Your Name)</Label>
-                  <Input
-                    id="senderName"
-                    placeholder="e.g., John"
-                    value={senderName}
-                    onChange={(e) => setSenderName(e.target.value)}
-                  />
+                  <Label>From (You)</Label>
+                  <Input value={senderName} onChange={(e) => setSenderName(e.target.value)} placeholder="e.g. John" />
                 </div>
               </div>
               <div>
                 <div className="flex justify-between items-center mb-2">
-                  <Label htmlFor="message">Your Message</Label>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleGenerateMessage}
-                    disabled={isGeneratingMessage}
-                  >
-                    {isGeneratingMessage ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Sparkles className="h-4 w-4 mr-2" />
-                    )}
-                    AI Suggestion
+                  <Label>Your Message</Label>
+                  <Button variant="outline" size="sm" onClick={handleGenerateMessage} disabled={isGeneratingMessage}>
+                    <Sparkles className="h-4 w-4 mr-2" /> AI Suggestion
                   </Button>
                 </div>
-                <Textarea
-                  id="message"
-                  placeholder="Write your heartfelt Christmas message..."
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  rows={6}
-                  maxLength={500}
+                <Textarea 
+                  value={message} 
+                  onChange={(e) => setMessage(e.target.value)} 
+                  rows={6} 
+                  maxLength={500} 
+                  placeholder="Merry Christmas..." 
                 />
-                <p className="text-xs text-muted-foreground text-right mt-1">
-                  {message.length}/500 characters
-                </p>
               </div>
             </div>
           </div>
         )}
 
-        {/* Music Selection */}
+        {/* Step 3: Music */}
         {currentStep === "music" && (
           <div className="space-y-6 max-w-2xl mx-auto">
             <div className="text-center">
               <h2 className="text-2xl font-bold mb-2">Add Music</h2>
-              <p className="text-muted-foreground">
-                Choose a Christmas song or upload your own
-              </p>
             </div>
-
-            {/* Upload Custom Song */}
+            
             <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Upload className="h-5 w-5" />
-                  Upload Your Own Music
-                </CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle className="text-lg flex gap-2"><Upload className="h-5 w-5"/> Custom Upload</CardTitle></CardHeader>
               <CardContent>
-                <div className="flex items-center gap-4">
-                  <Input
-                    type="file"
-                    accept="audio/*"
-                    onChange={handleSongChange}
-                    className="flex-1"
-                  />
-                  {customSongFile && (
-                    <span className="text-sm text-muted-foreground">
-                      {customSongFile.name}
-                    </span>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Max file size: 10MB. Supported formats: MP3, WAV, OGG
-                </p>
+                 <Input type="file" accept="audio/*" onChange={handleSongChange} />
+                 {customSongFile && <p className="text-sm mt-2">{customSongFile.name}</p>}
               </CardContent>
             </Card>
 
-            {/* Song Library */}
             <Card>
-              <CardHeader>
-                <CardTitle className="text-lg flex items-center gap-2">
-                  <Music className="h-5 w-5" />
-                  Christmas Song Library
-                </CardTitle>
-              </CardHeader>
+              <CardHeader><CardTitle className="text-lg flex gap-2"><Music className="h-5 w-5"/> Library</CardTitle></CardHeader>
               <CardContent>
-                {loadingSongs ? (
-                  <div className="flex justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                ) : songs.length === 0 ? (
-                  <p className="text-center text-muted-foreground py-8">
-                    No songs available. Upload your own music above!
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {songs.map((song) => (
-                      <div
-                        key={song.id}
-                        className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer transition-colors ${
-                          selectedSong === song.id
-                            ? "border-primary bg-primary/5"
-                            : "hover:bg-muted/50"
-                        }`}
-                        onClick={() => {
-                          setSelectedSong(song.id);
-                          setCustomSongFile(null);
-                        }}
-                      >
-                        <div className="flex items-center gap-3">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              togglePlaySong(song.id, song.fileUrl);
-                            }}
-                          >
-                            {playingSong === song.id ? (
-                              <Pause className="h-4 w-4" />
-                            ) : (
-                              <Play className="h-4 w-4" />
-                            )}
-                          </Button>
-                          <div>
-                            <p className="font-medium text-sm">{song.title}</p>
-                            {song.artist && (
-                              <p className="text-xs text-muted-foreground">
-                                {song.artist}
-                              </p>
-                            )}
-                          </div>
+                <div className="space-y-2">
+                  {SONGS.map((song) => (
+                    <div
+                      key={song.id}
+                      className={`flex items-center justify-between p-3 rounded-lg border cursor-pointer ${
+                        selectedSong === song.id ? "border-primary bg-primary/5" : "hover:bg-muted/50"
+                      }`}
+                      onClick={() => { setSelectedSong(song.id); setCustomSongFile(null); }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => {
+                          e.stopPropagation();
+                          togglePlaySong(song.id, song.fileUrl);
+                        }}>
+                          {playingSong === song.id ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
+                        </Button>
+                        <div>
+                          <p className="font-medium text-sm">{song.title}</p>
+                          <p className="text-xs text-muted-foreground">{song.artist}</p>
                         </div>
-                        {selectedSong === song.id && (
-                          <Check className="h-5 w-5 text-primary" />
-                        )}
                       </div>
-                    ))}
+                      {selectedSong === song.id && <Check className="h-5 w-5 text-primary" />}
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Step 4: Photo */}
+        {currentStep === "photo" && (
+          <div className="space-y-6 max-w-2xl mx-auto">
+             <div className="text-center">
+              <h2 className="text-2xl font-bold mb-2">Add a Photo</h2>
+            </div>
+            <Card>
+              <CardContent className="pt-6 text-center">
+                {photoPreview ? (
+                  <div className="relative inline-block">
+                    <img src={photoPreview} alt="Preview" className="max-h-64 rounded-lg" />
+                    <Button variant="destructive" size="sm" className="absolute top-2 right-2" onClick={() => { setPhotoFile(null); setPhotoPreview(null); }}>Remove</Button>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed rounded-lg p-12">
+                    <ImageIcon className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <Input type="file" accept="image/*" onChange={handlePhotoChange} />
                   </div>
                 )}
               </CardContent>
             </Card>
-
-            <p className="text-center text-sm text-muted-foreground">
-              Music is optional. You can skip this step if you prefer.
-            </p>
           </div>
         )}
 
-        {/* Photo Upload */}
-        {currentStep === "photo" && (
+        {/* Step 5: Payment */}
+        {currentStep === "payment" && (
           <div className="space-y-6 max-w-2xl mx-auto">
             <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2">Add a Photo</h2>
-              <p className="text-muted-foreground">
-                Make your card more personal with a photo
-              </p>
+              <h2 className="text-2xl font-bold mb-2">Finalize & Pay</h2>
+              <p className="text-muted-foreground">Secure payment via Stripe</p>
             </div>
 
             <Card>
               <CardContent className="pt-6">
-                <div className="flex flex-col items-center gap-4">
-                  {photoPreview ? (
-                    <div className="relative">
-                      <img
-                        src={photoPreview}
-                        alt="Preview"
-                        className="max-w-full max-h-64 rounded-lg shadow-lg"
-                      />
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        className="absolute top-2 right-2"
-                        onClick={() => {
-                          setPhotoFile(null);
-                          setPhotoPreview(null);
-                        }}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  ) : (
-                    <div className="border-2 border-dashed rounded-lg p-12 text-center w-full">
-                      <Image className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground mb-4">
-                        Drag and drop or click to upload
-                      </p>
-                      <Input
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePhotoChange}
-                        className="max-w-xs mx-auto"
-                      />
-                    </div>
-                  )}
-                </div>
-                <p className="text-xs text-muted-foreground text-center mt-4">
-                  Max file size: 5MB. Supported formats: JPG, PNG, GIF
-                </p>
-              </CardContent>
-            </Card>
-
-            <p className="text-center text-sm text-muted-foreground">
-              Photo is optional. You can skip this step if you prefer.
-            </p>
-          </div>
-        )}
-
-        {/* Payment */}
-        {currentStep === "payment" && (
-          <div className="space-y-6 max-w-2xl mx-auto">
-            <div className="text-center">
-              <h2 className="text-2xl font-bold mb-2">Complete Your Order</h2>
-              <p className="text-muted-foreground">
-                Choose your plan and complete payment
-              </p>
-            </div>
-
-            {creditCode ? (
-              <Card className="border-primary">
-                <CardContent className="pt-6 text-center">
-                  <Check className="h-12 w-12 text-primary mx-auto mb-4" />
-                  <h3 className="font-semibold text-lg mb-2">Credit Code Applied</h3>
-                  <p className="text-muted-foreground">
-                    You're using credit code: <strong>{creditCode}</strong>
-                  </p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid md:grid-cols-2 gap-4">
-                <Card
-                  className={`cursor-pointer transition-all ${
-                    selectedPlan === "single"
-                      ? "ring-2 ring-primary"
-                      : "hover:border-primary/50"
-                  }`}
-                  onClick={() => setSelectedPlan("single")}
-                >
-                  <CardContent className="pt-6 text-center">
-                    <h3 className="font-semibold text-lg mb-1">Single Card</h3>
-                    <p className="text-3xl font-bold text-primary mb-2">R$ 3</p>
-                    <p className="text-sm text-muted-foreground">1 card</p>
-                  </CardContent>
-                </Card>
-                <Card
-                  className={`cursor-pointer transition-all relative ${
-                    selectedPlan === "family"
-                      ? "ring-2 ring-primary"
-                      : "hover:border-primary/50"
-                  }`}
-                  onClick={() => setSelectedPlan("family")}
-                >
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-medium">
-                    Best Value
-                  </div>
-                  <CardContent className="pt-6 text-center">
-                    <h3 className="font-semibold text-lg mb-1">Family Pack</h3>
-                    <p className="text-3xl font-bold text-primary mb-2">R$ 5</p>
-                    <p className="text-sm text-muted-foreground">5 cards</p>
-                  </CardContent>
-                </Card>
-              </div>
-            )}
-
-            <Card>
-              <CardContent className="pt-6 space-y-4">
-                <div>
-                  <Label htmlFor="email">Your Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="your@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    We'll send your QR code and card link to this email
-                  </p>
-                </div>
+                <Label>Your Email</Label>
+                <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="your@email.com" />
               </CardContent>
             </Card>
 
             <div className="flex gap-4">
-              <Button
-                className="flex-1"
-                size="lg"
-                onClick={handleSubmit}
-                disabled={createCardMutation.isPending || !canProceed()}
+              <Button 
+                className="flex-1" 
+                size="lg" 
+                onClick={handleSubmit} 
+                disabled={isUploading || createCardMutation.isPending || !canProceed()}
               >
-                {createCardMutation.isPending ? (
+                {(isUploading || createCardMutation.isPending) ? (
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                 ) : (
                   <CreditCard className="h-4 w-4 mr-2" />
                 )}
-                {creditCode ? "Create Card" : "Proceed to Payment"}
+                {isUploading ? "Uploading..." : "Pay R$ 3.00"}
               </Button>
             </div>
-
-            <p className="text-center text-xs text-muted-foreground">
-              Secure payment powered by Stripe. Cards are accessible until January 15th, 2025.
-            </p>
           </div>
         )}
 
-        {/* Navigation Buttons */}
+        {/* Navigation Footer */}
         {currentStep !== "payment" && (
           <div className="flex justify-between mt-8">
-            <Button variant="outline" onClick={handleBack}>
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Back
-            </Button>
-            <Button onClick={handleNext} disabled={!canProceed()}>
-              Next
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
+            <Button variant="outline" onClick={handleBack}>Back</Button>
+            <div className="flex gap-2">
+              {selectedTemplate && (
+                <Button variant="outline" onClick={() => setIsPreviewOpen(true)}>
+                  <Eye className="h-4 w-4 mr-2" /> Preview
+                </Button>
+              )}
+              <Button onClick={handleNext} disabled={!canProceed()}>Next <ArrowRight className="ml-2 h-4 w-4" /></Button>
+            </div>
           </div>
         )}
+
       </main>
     </div>
   );
