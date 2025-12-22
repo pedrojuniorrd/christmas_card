@@ -1,15 +1,16 @@
 export type AnimationType = "snow" | "lights" | "stars";
 
 export interface CardTemplate {
-  id: number;
   name: string;
   description: string;
-  className: string; // Classe CSS principal
-  accentColor: string; // Cor de botões e detalhes
+  className: string;
+  accentColor: string;
   animation: AnimationType;
-  preview: string; // Emoji de preview
-  
-  // Opcionais para customização avançada
+  preview: string;
   textColor?: string;
   overlayImage?: string;
+}
+
+export interface CardTemplate {
+  id: number; // O ID será injetado dinamicamente
 }
