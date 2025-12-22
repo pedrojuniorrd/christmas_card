@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1766419851884,
+      "tag": "0000_cute_eternals",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1766420112334,
+      "tag": "0001_short_metal_master",
+      "breakpoints": true
+    }
+  ]
+}

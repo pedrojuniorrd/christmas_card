@@ -1,0 +1,258 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  /* Christmas custom colors */
+  --color-christmas-red: oklch(0.55 0.22 25);
+  --color-christmas-green: oklch(0.45 0.15 145);
+  --color-christmas-gold: oklch(0.75 0.15 85);
+  --color-christmas-cream: oklch(0.97 0.01 90);
+  --color-christmas-dark: oklch(0.18 0.02 25);
+}
+
+:root {
+  /* Christmas Red as primary */
+  --primary: oklch(0.55 0.22 25);
+  --primary-foreground: oklch(0.98 0.005 90);
+  /* Christmas Green as secondary */
+  --secondary: oklch(0.45 0.15 145);
+  --secondary-foreground: oklch(0.98 0.005 90);
+  /* Gold accent */
+  --accent: oklch(0.75 0.15 85);
+  --accent-foreground: oklch(0.18 0.02 25);
+  /* Sidebar with green theme */
+  --sidebar-primary: oklch(0.45 0.15 145);
+  --sidebar-primary-foreground: oklch(0.98 0.005 90);
+  /* Charts with Christmas palette */
+  --chart-1: oklch(0.55 0.22 25);
+  --chart-2: oklch(0.45 0.15 145);
+  --chart-3: oklch(0.75 0.15 85);
+  --chart-4: oklch(0.65 0.18 25);
+  --chart-5: oklch(0.55 0.12 145);
+  --radius: 0.75rem;
+  /* Light cream background */
+  --background: oklch(0.98 0.005 90);
+  --foreground: oklch(0.18 0.02 25);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.18 0.02 25);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.18 0.02 25);
+  --muted: oklch(0.95 0.01 90);
+  --muted-foreground: oklch(0.45 0.02 25);
+  --destructive: oklch(0.577 0.245 27.325);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.88 0.02 90);
+  --input: oklch(0.92 0.01 90);
+  --ring: oklch(0.55 0.22 25);
+  --sidebar: oklch(0.97 0.005 90);
+  --sidebar-foreground: oklch(0.18 0.02 25);
+  --sidebar-accent: oklch(0.94 0.01 90);
+  --sidebar-accent-foreground: oklch(0.18 0.02 25);
+  --sidebar-border: oklch(0.88 0.02 90);
+  --sidebar-ring: oklch(0.55 0.22 25);
+}
+
+.dark {
+  /* Christmas Red as primary in dark mode */
+  --primary: oklch(0.65 0.20 25);
+  --primary-foreground: oklch(0.98 0.005 90);
+  /* Christmas Green as secondary */
+  --secondary: oklch(0.55 0.12 145);
+  --secondary-foreground: oklch(0.98 0.005 90);
+  /* Gold accent */
+  --accent: oklch(0.75 0.15 85);
+  --accent-foreground: oklch(0.12 0.02 25);
+  --sidebar-primary: oklch(0.55 0.12 145);
+  --sidebar-primary-foreground: oklch(0.98 0.005 90);
+  /* Dark festive background */
+  --background: oklch(0.12 0.02 25);
+  --foreground: oklch(0.95 0.005 90);
+  --card: oklch(0.18 0.025 25);
+  --card-foreground: oklch(0.95 0.005 90);
+  --popover: oklch(0.18 0.025 25);
+  --popover-foreground: oklch(0.95 0.005 90);
+  --muted: oklch(0.22 0.02 25);
+  --muted-foreground: oklch(0.65 0.02 90);
+  --destructive: oklch(0.704 0.191 22.216);
+  --destructive-foreground: oklch(0.985 0 0);
+  --border: oklch(0.28 0.03 25);
+  --input: oklch(0.25 0.025 25);
+  --ring: oklch(0.65 0.20 25);
+  --chart-1: oklch(0.65 0.20 25);
+  --chart-2: oklch(0.55 0.12 145);
+  --chart-3: oklch(0.75 0.15 85);
+  --chart-4: oklch(0.70 0.18 25);
+  --chart-5: oklch(0.60 0.10 145);
+  --sidebar: oklch(0.15 0.02 25);
+  --sidebar-foreground: oklch(0.95 0.005 90);
+  --sidebar-accent: oklch(0.22 0.025 25);
+  --sidebar-accent-foreground: oklch(0.95 0.005 90);
+  --sidebar-border: oklch(0.28 0.03 25);
+  --sidebar-ring: oklch(0.65 0.20 25);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  [type="button"]:not(:disabled),
+  [type="submit"]:not(:disabled),
+  [type="reset"]:not(:disabled),
+  a[href],
+  select:not(:disabled),
+  input[type="checkbox"]:not(:disabled),
+  input[type="radio"]:not(:disabled) {
+    @apply cursor-pointer;
+  }
+}
+
+@layer components {
+  .container {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  .flex {
+    min-height: 0;
+    min-width: 0;
+  }
+
+  @media (min-width: 640px) {
+    .container {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container {
+      padding-left: 2rem;
+      padding-right: 2rem;
+      max-width: 1280px;
+    }
+  }
+
+  /* Snowfall animation */
+  @keyframes snowfall {
+    0% {
+      transform: translateY(-10vh) translateX(0);
+      opacity: 1;
+    }
+    100% {
+      transform: translateY(110vh) translateX(20px);
+      opacity: 0.3;
+    }
+  }
+
+  /* Twinkling lights animation */
+  @keyframes twinkle {
+    0%, 100% {
+      opacity: 1;
+      transform: scale(1);
+    }
+    50% {
+      opacity: 0.4;
+      transform: scale(0.8);
+    }
+  }
+
+  /* Gentle glow animation */
+  @keyframes glow {
+    0%, 100% {
+      box-shadow: 0 0 5px var(--color-christmas-gold), 0 0 10px var(--color-christmas-gold);
+    }
+    50% {
+      box-shadow: 0 0 20px var(--color-christmas-gold), 0 0 30px var(--color-christmas-gold);
+    }
+  }
+
+  .snowflake {
+    position: fixed;
+    color: white;
+    font-size: 1rem;
+    pointer-events: none;
+    animation: snowfall linear infinite;
+    z-index: 1000;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.8);
+  }
+
+  .christmas-light {
+    animation: twinkle ease-in-out infinite;
+  }
+
+  .golden-glow {
+    animation: glow 2s ease-in-out infinite;
+  }
+
+  /* Christmas card specific styles */
+  .card-template {
+    @apply relative overflow-hidden rounded-xl shadow-lg transition-all duration-300;
+  }
+
+  .card-template:hover {
+    @apply shadow-2xl scale-[1.02];
+  }
+
+  /* Gradient backgrounds for cards */
+  .christmas-gradient-red {
+    background: linear-gradient(135deg, oklch(0.55 0.22 25) 0%, oklch(0.45 0.18 25) 100%);
+  }
+
+  .christmas-gradient-green {
+    background: linear-gradient(135deg, oklch(0.45 0.15 145) 0%, oklch(0.35 0.12 145) 100%);
+  }
+
+  .christmas-gradient-gold {
+    background: linear-gradient(135deg, oklch(0.75 0.15 85) 0%, oklch(0.65 0.12 75) 100%);
+  }
+
+  .christmas-gradient-night {
+    background: linear-gradient(180deg, oklch(0.15 0.03 260) 0%, oklch(0.25 0.05 260) 100%);
+  }
+}
