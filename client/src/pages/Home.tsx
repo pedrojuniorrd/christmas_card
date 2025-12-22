@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Gift, Music, QrCode, Sparkles, Heart, Clock } from "lucide-react";
 import { Link } from "wouter";
-import Snowfall from "@/components/Snowfall";
+// import Snowfall from "@/components/Snowfall";
 
 export default function Home() {
   const features = [
@@ -47,7 +47,7 @@ export default function Home() {
 
   return (
     <div className="min-h-screen relative overflow-hidden">
-      <Snowfall />
+      {/* <Snowfall /> */}
       
       {/* Hero Section */}
       <section className="relative pt-20 pb-32 px-4">
