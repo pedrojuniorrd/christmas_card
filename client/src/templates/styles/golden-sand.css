@@ -1,0 +1,112 @@
+/* client/src/templates/styles/golden-sand.css */
+
+.golden-sand-effect {
+  /* --- 1. FUNDO (GIF) --- */
+  background-image: url('https://media4.giphy.com/media/v1.Y2lkPTc5MGI3NjExZ3B1ZjBhcWxyZ2w3ZnNtZXlocTgzdm52M2Y5M3FqZ3VoNHJsa2N2byZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/l4KihuqeuJEi9qLSM/giphy.gif');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: #d4af37;
+
+  /* --- CENTRALIZAÇÃO --- */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  
+  position: relative;
+  overflow: hidden;
+}
+
+/* --- 2. CAMADA 1: OVERLAY ESCURO (Fundo) --- */
+.golden-sand-effect::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5); /* Escurece o GIF */
+  z-index: 1; /* Nível 1 */
+  pointer-events: none;
+}
+
+/* --- 3. CAMADA 2: GLASS BOKEH (Luzes por Cima do Escuro) --- */
+.golden-sand-effect::after {
+  content: '';
+  position: absolute;
+  inset: -50%; 
+  
+  /* CORES MAIS FORTES PARA GARANTIR VISIBILIDADE */
+  background-image: 
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.3) 0%, transparent 40%), /* Branco Central */
+    radial-gradient(circle at 20% 80%, rgba(255, 215, 0, 0.4) 0%, transparent 40%), /* Ouro Forte */
+    radial-gradient(circle at 80% 20%, rgba(255, 140, 0, 0.3) 0%, transparent 40%); /* Laranja/Âmbar */
+    
+  /* Blur menor para definir melhor as formas */
+  filter: blur(35px); 
+  
+  /* Screen faz as luzes "brilharem" sobre o fundo escuro */
+  mix-blend-mode: screen; 
+  opacity: 0.9; /* Opacidade alta */
+  
+  animation: glass-bokeh-float 12s infinite alternate ease-in-out;
+  z-index: 2; /* Nível 2 (Fica acima do overlay preto, brilhando mais) */
+  pointer-events: none;
+}
+
+@keyframes glass-bokeh-float {
+  0% { transform: translate(0, 0) rotate(0deg); }
+  100% { transform: translate(-30px, -30px) rotate(8deg); }
+}
+
+/* --- 4. CAMADA 3: CONTEÚDO (Frente) --- */
+.golden-sand-effect > * {
+  position: relative;
+  z-index: 10; /* Nível 10 (Sempre na frente de tudo) */
+}
+
+/* --- 5. ESTILOS DO CARTÃO/BOTÃO --- */
+.golden-sand-effect .bg-white\/95,      
+.golden-sand-effect .bg-white\/10 {     
+  background-color: rgba(30, 30, 30, 0.75) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  
+  border: 1px solid rgba(255, 215, 0, 0.3);
+  border-top: 1px solid rgba(255, 255, 255, 0.6);
+  
+  box-shadow: 
+    0 15px 40px rgba(0, 0, 0, 0.4),
+    0 0 0 1px rgba(255, 215, 0, 0.1);
+    
+  color: #f0f0f0 !important;
+  transition: all 0.4s ease;
+}
+
+/* Hover Effect */
+.golden-sand-effect:hover .bg-white\/95,
+.golden-sand-effect:hover .bg-white\/10 {
+  transform: translateY(-5px);
+  background-color: rgba(50, 50, 50, 0.85) !important;
+  border-color: rgba(255, 215, 0, 0.8);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.5), 0 0 20px rgba(255, 215, 0, 0.2);
+}
+
+/* Tipografia e Botões */
+.golden-sand-effect .text-foreground,
+.golden-sand-effect .text-white {
+  color: #ffffff !important;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+}
+
+.golden-sand-effect .text-muted-foreground { color: #e2e8f0 !important; }
+.golden-sand-effect .text-primary { color: #ffd700 !important; }
+
+.golden-sand-effect button {
+  border-radius: 9999px;
+  background: linear-gradient(to right, #d4af37, #b8860b);
+  border: none;
+  color: #000 !important;
+  font-weight: 700;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
