@@ -1,0 +1,59 @@
+.christmas-gradient-sweet {
+  /* Gradiente "Rose Gold & Pearl": Sofisticado e suave */
+  background: linear-gradient(120deg, #fccb90 0%, #d57eeb 50%, #a1c4fd 100%);
+  background-size: 200% 200%;
+  animation: premium-drift 15s ease infinite;
+}
+
+@keyframes premium-drift {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Customização do Cartão Interno - Visual "Frosted Crystal" */
+.christmas-gradient-sweet .bg-white\/95 {
+  /* Vidro mais transparente e sofisticado */
+  background-color: rgba(255, 255, 255, 0.4) !important;
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  
+  /* Borda fina e elegante */
+  border: 1px solid rgba(255, 255, 255, 0.6);
+  border-top: 1px solid rgba(255, 255, 255, 0.9); /* Topo mais brilhante imitando luz */
+  border-radius: 24px;
+  
+  /* Sombra colorida difusa (Glow) */
+  box-shadow: 0 20px 40px rgba(213, 126, 235, 0.15), 
+              0 0 0 1px rgba(255, 255, 255, 0.1);
+  
+  color: #475569 !important; /* Texto Slate-600 para elegância */
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover Effect: O cartão "flutua" e brilha */
+.christmas-gradient-sweet:hover .bg-white\/95 {
+  transform: translateY(-5px);
+  background-color: rgba(255, 255, 255, 0.5) !important;
+  box-shadow: 0 30px 60px rgba(161, 196, 253, 0.25), 
+              0 0 0 1px rgba(255, 255, 255, 0.4);
+  border-color: rgba(255, 255, 255, 1);
+}
+
+/* Tipografia Premium */
+.christmas-gradient-sweet .text-foreground {
+  color: #334155 !important; /* Slate-700 */
+  font-weight: 500;
+  letter-spacing: -0.01em;
+}
+
+.christmas-gradient-sweet .text-muted-foreground {
+  color: #64748b !important; /* Slate-500 */
+}
+
+/* Neve sutil com brilho dourado */
+.christmas-gradient-sweet .snowflake {
+  color: #fff;
+  opacity: 0.8;
+  filter: drop-shadow(0 0 2px rgba(255, 215, 0, 0.5));
+}

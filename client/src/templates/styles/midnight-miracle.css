@@ -1,0 +1,42 @@
+.christmas-gradient-midnight {
+  background: linear-gradient(to bottom, #020111 0%, #191654 40%, #43C6AC 100%);
+  position: relative;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* Adiciona um brilho sutil no topo */
+.christmas-gradient-midnight::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: radial-gradient(circle at 50% 0%, rgba(255,255,255,0.15), transparent 70%);
+  pointer-events: none;
+}
+
+/* Card interno estilo vidro fosco (Glassmorphism) */
+.christmas-gradient-midnight .bg-white\/95 {
+  background: rgba(255, 255, 255, 0.05) !important;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: white !important;
+}
+
+.christmas-gradient-midnight .text-foreground {
+  color: #ffffff !important;
+  letter-spacing: 0.5px;
+}
+
+.christmas-gradient-midnight .text-muted-foreground {
+  color: #a5b4fc !important; /* Azul índigo claro */
+}
+
+/* Efeito Hover no container principal */
+.christmas-gradient-midnight:hover .bg-white\/95 {
+  background: rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 0 30px rgba(67, 198, 172, 0.3);
+  border-color: rgba(255, 255, 255, 0.4);
+}

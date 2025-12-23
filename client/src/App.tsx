@@ -9,7 +9,7 @@ import CreateCard from "./pages/CreateCard";
 import CardView from "./pages/CardView";
 import PaymentSuccess from "./pages/PaymentSuccess";
 import PaymentCancel from "./pages/PaymentCancel";
-
+import { LanguageProvider } from "@/contexts/LanguageContext";
 function Router() {
   return (
     <Switch>
@@ -27,6 +27,7 @@ function Router() {
 
 function App() {
   return (
+    <LanguageProvider>
     <ErrorBoundary>
       <ThemeProvider defaultTheme="light">
         <TooltipProvider>
@@ -35,6 +36,7 @@ function App() {
         </TooltipProvider>
       </ThemeProvider>
     </ErrorBoundary>
+    </LanguageProvider>
   );
 }
 

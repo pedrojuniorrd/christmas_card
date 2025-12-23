@@ -4,6 +4,7 @@ import { Volume2, VolumeX } from "lucide-react";
 import Snowfall from "@/components/Snowfall";
 import TwinklingLights from "@/components/TwinklingLights";
 import { getTemplateById } from "@/templates"; // Importe do novo módulo
+import { Stars } from "./Stars";
 
 export interface CardPreviewData {
   templateId: number;
@@ -63,7 +64,7 @@ export default function CardPreview({ data, autoReveal = false }: CardPreviewPro
       {/* Renderiza a animação baseada na configuração do template */}
       {currentTemplate.animation === "snow" && <Snowfall count={60} />}
       {currentTemplate.animation === "lights" && <TwinklingLights />}
-      {currentTemplate.animation === "stars" && <Snowfall count={40} />}
+      {currentTemplate.animation === "stars" && <Stars/>}
 
       {/* Controls */}
       <div className="absolute top-4 right-4 z-50 flex gap-2">

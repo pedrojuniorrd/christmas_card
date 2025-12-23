@@ -1,7 +1,7 @@
 export type AnimationType = "snow" | "lights" | "stars";
 
 export interface CardTemplate {
-  id: number;
+  id: number; // Obrigatório na aplicação final
   name: string;
   description: string;
   className: string; // Classe CSS principal
@@ -9,7 +9,11 @@ export interface CardTemplate {
   animation: AnimationType;
   preview: string; // Emoji de preview
   
-  // Opcionais para customização avançada
+  // Opcionais
   textColor?: string;
   overlayImage?: string;
 }
+
+// ADICIONE ESTA LINHA:
+// Cria um tipo que tem tudo do CardTemplate, EXCETO o 'id'
+export type CardTemplateDefinition = Omit<CardTemplate, "id">;
