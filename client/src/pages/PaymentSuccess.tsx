@@ -6,7 +6,7 @@ import { trpc } from "@/lib/trpc";
 import { Check, Copy, Gift, Loader2, ExternalLink, Download } from "lucide-react";
 import { toast } from "sonner";
 import Snowfall from "@/components/Snowfall";
-import QRCode from "@/components/QRCode";
+import QRCode from "@/components/QRCode"; // Certifique-se que o import do QRCode está certo
 
 export default function PaymentSuccess() {
   const [, setLocation] = useLocation();
@@ -47,7 +47,6 @@ export default function PaymentSuccess() {
   if (isLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <Snowfall count={30} />
         <div className="text-center">
           <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
           <p className="text-muted-foreground">Verifying your payment...</p>
@@ -72,7 +71,10 @@ export default function PaymentSuccess() {
     );
   }
 
-  const cardUrl = `${window.location.origin}/c/${paymentData.publicId}`;
+  // --- CORREÇÃO AQUI ---
+  // Usamos encodeURIComponent para transformar as barras "/" do ID em "%2F"
+  // Isso garante que o navegador abra a rota da aplicação, não o arquivo JSON direto.
+  const cardUrl = `${window.location.origin}/c/${encodeURIComponent(paymentData.publicId)}`;
 
   return (
     <div className="min-h-screen bg-background relative">
@@ -95,6 +97,7 @@ export default function PaymentSuccess() {
               <h2 className="font-semibold text-lg mb-4">Your Card QR Code</h2>
               <div className="flex justify-center mb-4">
                 <div className="p-4 bg-white rounded-xl shadow-lg">
+                  {/* O QRCode vai apontar para a URL codificada correta */}
                   <QRCode value={cardUrl} size={200} />
                 </div>
               </div>

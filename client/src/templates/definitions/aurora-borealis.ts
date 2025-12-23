@@ -1,7 +1,7 @@
-import { CardTemplate } from "../types";
+import { CardTemplateDefinition } from "../types";
 import "../styles/aurora-borealis.css";
 
-export const AuroraBorealis: CardTemplate = {
+export const AuroraBorealis: CardTemplateDefinition = {
   name: "Aurora Borealis",
   description: "Modern animated northern lights",
   className: "christmas-gradient-aurora",

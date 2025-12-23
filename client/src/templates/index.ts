@@ -1,4 +1,4 @@
-import { CardTemplate} from "./types";
+import { CardTemplate, CardTemplateDefinition } from "./types"; // Importe o novo tipo
 
 export * from "./types";
 
@@ -11,27 +11,23 @@ const modules = import.meta.glob('./definitions/*.ts', { eager: true });
 
 // 3. Processamento Dinâmico com IDs Determinísticos
 export const AVAILABLE_TEMPLATES: CardTemplate[] = Object.entries(modules)
-  // ORDENAÇÃO É CRUCIAL:
-  // Ordenamos pelo caminho do arquivo (ex: ./definitions/aurora.ts vem antes de ./definitions/classic.ts)
-  // Isso garante que 'aurora.ts' sempre receba o mesmo ID (ex: 1), independente da ordem de carregamento do sistema.
   .sort(([pathA], [pathB]) => pathA.localeCompare(pathB))
   .map(([path, module]: [string, any], index) => {
-    // Extrai o export do arquivo (assumindo que é o primeiro/único export)
-    const definition = Object.values(module)[0]; 
+    // Força o TS a entender que isso é uma Definição (sem ID)
+    const definition = Object.values(module)[0] as CardTemplateDefinition; 
 
     if (!definition || !definition.name) {
       console.warn(`Template inválido encontrado em: ${path}`);
       return null;
     }
 
-    // A MÁGICA ACONTECE AQUI:
-    // O ID vira o índice + 1. Sem conflitos, sem duplicatas.
+    // Retorna o objeto completo (Definição + ID), que satisfaz CardTemplate
     return {
       ...definition,
       id: index + 1 
     };
   })
-  .filter((t): t is CardTemplate => t !== null); // Remove possíveis nulos
+  .filter((t): t is CardTemplate => t !== null);
 
 // Helpers
 export const getTemplateById = (id: number): CardTemplate => {

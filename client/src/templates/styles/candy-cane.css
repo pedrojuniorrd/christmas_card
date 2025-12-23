@@ -1,0 +1,86 @@
+/* client/src/templates/styles/candy-cane.css */
+
+.christmas-gradient-candycane {
+  /* Cores mais suaves: Vermelho Vintage e Branco Creme */
+  --stripe-color: #c92a2a; /* Vermelho menos agressivo */
+  --bg-color: #f8f0fc;     /* Branco levemente rosado/creme */
+  
+  background-color: var(--bg-color);
+  background-image: linear-gradient(
+    45deg,
+    var(--stripe-color) 25%,
+    transparent 25%,
+    transparent 50%,
+    var(--stripe-color) 50%,
+    var(--stripe-color) 75%,
+    transparent 75%,
+    transparent
+  );
+  
+  /* O TAMANHO DO PADRÃO:
+     Quanto maior este número, mais largas as listras (menos psicodélico).
+     Usei 80px para ficar bem visível e calmo.
+  */
+  background-size: 80px 80px;
+  
+  /* Animação mais lenta (10s) para suavizar */
+  animation: candy-slide 10s linear infinite;
+  
+  position: relative;
+  overflow: hidden;
+  border: 8px solid #ffffff; /* Borda branca grossa para dar acabamento */
+  box-shadow: 
+    inset 0 0 40px rgba(0,0,0,0.1), /* Sombra interna para profundidade */
+    0 0 20px rgba(200, 40, 40, 0.2);
+}
+
+/* CORREÇÃO DO LOOP:
+  A animação move o fundo de 0px até 80px (que é o tamanho exato do background-size).
+  Isso elimina o "corte" visual.
+*/
+@keyframes candy-slide {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 80px 80px;
+  }
+}
+
+/* Customização do Cartão Interno */
+.christmas-gradient-candycane .bg-white\/95 {
+  background-color: #ffffff !important;
+  /* Borda dupla para parecer um cartão clássico */
+  border: 1px solid #e5e5e5;
+  outline: 4px solid #c92a2a;
+  outline-offset: -10px;
+  
+  border-radius: 4px; /* Cantos menos arredondados, mais parecidos com papel */
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+  color: #c92a2a !important;
+}
+
+/* Títulos e Textos */
+.christmas-gradient-candycane .text-foreground {
+  color: #8a1c1c !important; 
+  font-family: serif; /* Fonte serifada fica mais elegante neste tema */
+  letter-spacing: 0.5px;
+}
+
+.christmas-gradient-candycane .text-muted-foreground {
+  color: #b05c5c !important;
+}
+
+/* Botões */
+.christmas-gradient-candycane button {
+  background-color: #c92a2a;
+  color: white;
+  border-radius: 50px; /* Botões bem redondos contrastam com o cartão quadrado */
+  box-shadow: 0 4px 10px rgba(201, 42, 42, 0.4);
+  transition: all 0.2s;
+}
+
+.christmas-gradient-candycane button:hover {
+  background-color: #a61e1e;
+  transform: translateY(-2px);
+}

@@ -6,7 +6,8 @@ import { Loader2, Volume2, VolumeX, Share2, Gift } from "lucide-react";
 import Snowfall from "@/components/Snowfall";
 import TwinklingLights from "@/components/TwinklingLights";
 import { toast } from "sonner";
-import { getTemplateById } from "@/templates"; // Importa o sistema modular
+import { getTemplateById } from "@/templates";
+import { optimizeImage } from "@/lib/utils"; // <--- IMPORT NOVO
 
 export default function CardView() {
   const { publicId } = useParams<{ publicId: string }>();
@@ -19,7 +20,6 @@ export default function CardView() {
     { enabled: !!publicId }
   );
 
-  // Busca as configurações do template (ou usa o padrão se não carregar)
   const currentTemplate = card ? getTemplateById(card.templateId) : getTemplateById(1);
 
   useEffect(() => {
@@ -32,7 +32,7 @@ export default function CardView() {
     setIsRevealed(true);
     if (audioRef.current && !isMuted) {
       audioRef.current.play().catch(() => {
-        // Autoplay blocked, user needs to interact
+        // Autoplay bloqueado pelo navegador
       });
     }
   };
@@ -59,7 +59,7 @@ export default function CardView() {
           url,
         });
       } catch {
-        // User cancelled or error
+        // Ignora erro
       }
     } else {
       await navigator.clipboard.writeText(url);
@@ -99,17 +99,14 @@ export default function CardView() {
 
   return (
     <div className={`min-h-screen ${currentTemplate.className} relative overflow-hidden`}>
-      {/* Audio element */}
       {audioUrl && (
         <audio ref={audioRef} src={audioUrl} loop preload="auto" />
       )}
 
-      {/* Animation based on template configuration */}
       {currentTemplate.animation === "snow" && <Snowfall count={60} />}
       {currentTemplate.animation === "lights" && <TwinklingLights />}
       {currentTemplate.animation === "stars" && <Snowfall count={40} />}
 
-      {/* Controls */}
       <div className="fixed top-4 right-4 z-50 flex gap-2">
         {audioUrl && (
           <Button
@@ -135,10 +132,8 @@ export default function CardView() {
         </Button>
       </div>
 
-      {/* Card Content */}
       <div className="min-h-screen flex items-center justify-center p-4">
         {!isRevealed ? (
-          /* Envelope / Reveal Animation */
           <div
             className="cursor-pointer transform hover:scale-105 transition-transform duration-300"
             onClick={handleReveal}
@@ -160,22 +155,23 @@ export default function CardView() {
             </div>
           </div>
         ) : (
-          /* Revealed Card */
           <div className="w-full max-w-lg animate-in fade-in zoom-in duration-700">
             <div className="bg-white/95 backdrop-blur-md rounded-2xl shadow-2xl overflow-hidden">
-              {/* Photo Section */}
+              
+              {/* --- AQUI ESTÁ A OTIMIZAÇÃO --- */}
               {card.photoUrl && (
-                <div className="aspect-video relative overflow-hidden">
+                <div className="aspect-video relative overflow-hidden bg-gray-100">
                   <img
-                    src={card.photoUrl}
+                    src={optimizeImage(card.photoUrl, 800)} // <--- USO DA FUNÇÃO
                     alt="Card photo"
                     className="w-full h-full object-cover"
+                    loading="lazy" // Boa prática
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                 </div>
               )}
+              {/* ------------------------------- */}
 
-              {/* Message Section */}
               <div className="p-8 text-center">
                 {card.recipientName && (
                   <p className="text-lg text-muted-foreground mb-2">
@@ -195,7 +191,6 @@ export default function CardView() {
                   </p>
                 )}
 
-                {/* Decorative elements */}
                 <div className="flex justify-center gap-4 mt-8 text-3xl">
                   <span className="animate-pulse">🎄</span>
                   <span className="animate-pulse delay-100">⭐</span>
@@ -208,7 +203,6 @@ export default function CardView() {
               </div>
             </div>
 
-            {/* Create your own CTA */}
             <div className="text-center mt-8">
               <Button
                 variant="secondary"
